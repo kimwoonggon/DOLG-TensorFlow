@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Created on Tue Oct 26 02:33:39 2021
 @author: innat
@@ -8,7 +9,7 @@ from tensorflow.keras import layers
 
 # Multi-Atrous Branch
 class MultiAtrous(keras.Model):
-    def __init__(self, dilation_rates=[3, 6, 12], upsampling=1, 
+    def __init__(self, dilation_rates=[6, 12, 18], upsampling=1, 
                  kernel_size=3, padding="same",  **kwargs):
         super(MultiAtrous, self).__init__(name='MultiAtrous', **kwargs)
         self.dilation_rates = dilation_rates
@@ -19,9 +20,9 @@ class MultiAtrous(keras.Model):
         self.dilated_convs = [
                                 layers.Conv2D(
                                     filters       = int(1024 / 4), 
-                                    kernel_size   = rate,  
+                                    kernel_size   = self.kernel_size,  
                                     padding       = self.padding, 
-                                    #dilation_rate = rate
+                                    dilation_rate = rate
                                 ) for rate in self.dilation_rates
                              ]
         
