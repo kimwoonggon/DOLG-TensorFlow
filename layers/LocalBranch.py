@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Oct 26 02:33:39 2021
-@author: innat
-"""
 import tensorflow as tf 
 from tensorflow import keras 
 from tensorflow.keras import layers 
@@ -16,21 +11,31 @@ class MultiAtrous(keras.Model):
         self.kernel_size = kernel_size 
         self.upsampling = upsampling
         self.padding = padding
-        # Dilated Convolutions                     
-        self.dilated_convs = [
-                                layers.Conv2D(
-                                    filters       = int(1024 / 4), 
+
+        self.dilation_convs0 = layers.Conv2D(
+                                    filters       = 256, 
                                     kernel_size   = self.kernel_size,  
                                     padding       = self.padding, 
-                                    dilation_rate = rate
-                                ) for rate in self.dilation_rates
-                             ]
+                                    dilation_rate = 6
+                                )
+        self.dilation_convs1 = layers.Conv2D(
+                                    filters       = 256, 
+                                    kernel_size   = self.kernel_size,  
+                                    padding       = self.padding, 
+                                    dilation_rate = 12
+                                )
+        self.dilation_convs2 = layers.Conv2D(
+                                    filters       = 256, 
+                                    kernel_size   = self.kernel_size,  
+                                    padding       = self.padding, 
+                                    dilation_rate = 18
+                                )
         
         # Global Average Pooling Branch 
         self.gap_branch = keras.Sequential(
             [
                 layers.GlobalAveragePooling2D(keepdims=True),
-                layers.Conv2D(int(1024 / 2), kernel_size=1),
+                layers.Conv2D(512, kernel_size=1),
                 layers.Activation('relu'),
                 layers.UpSampling2D(size=self.upsampling, interpolation="bilinear")
             ] , name='gap_branch'
@@ -39,10 +44,16 @@ class MultiAtrous(keras.Model):
     def call(self, inputs, training=None, **kwargs):
         local_feature = []
 
-        for dilated_conv in self.dilated_convs:
-            x = dilated_conv(inputs) 
-            x = self.gap_branch(x)
-            local_feature.append(x)
+        #for dilated_conv in self.dilated_convs:
+        x = self.dilation_convs0(inputs) 
+        x = self.gap_branch(x)
+        local_feature.append(x)
+        x = self.dilation_convs1(x)
+        x = self.gap_branch(x)
+        local_feature.append(x)
+        x = self.dilation_convs2(x)
+        x = self.gap_branch(x)
+        local_feature.append(x)
             
         return tf.concat(local_feature, axis=-1)
 
@@ -86,4 +97,4 @@ class DOLGLocalBranch(keras.Model):
         attn_map = keras.activations.softplus(attn_map) 
 
         # Output of the Local-Branch 
-        return  norm_local_feat * attn_map 
+        return  norm_local_feat * attn_map
