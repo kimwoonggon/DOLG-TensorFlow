@@ -13,31 +13,30 @@ class MultiAtrous(keras.Model):
         self.padding = padding
 
         self.dilation_convs0 = layers.Conv2D(
-                                    filters       = 256, 
+                                    filters       = 512, 
                                     kernel_size   = self.kernel_size,  
                                     padding       = self.padding, 
                                     dilation_rate = 6
                                 )
         self.dilation_convs1 = layers.Conv2D(
-                                    filters       = 256, 
+                                    filters       = 512, 
                                     kernel_size   = self.kernel_size,  
                                     padding       = self.padding, 
                                     dilation_rate = 12
                                 )
         self.dilation_convs2 = layers.Conv2D(
-                                    filters       = 256, 
+                                    filters       = 512, 
                                     kernel_size   = self.kernel_size,  
                                     padding       = self.padding, 
                                     dilation_rate = 18
                                 )
-        
         # Global Average Pooling Branch 
         self.gap_branch = keras.Sequential(
             [
                 layers.GlobalAveragePooling2D(keepdims=True),
                 layers.Conv2D(512, kernel_size=1),
                 layers.Activation('relu'),
-                layers.UpSampling2D(size=self.upsampling, interpolation="bilinear")
+                #layers.UpSampling2D(size=self.upsampling, interpolation="bilinear")
             ] , name='gap_branch'
         )
         
@@ -45,17 +44,15 @@ class MultiAtrous(keras.Model):
         local_feature = []
 
         #for dilated_conv in self.dilated_convs:
-        x = self.dilation_convs0(inputs) 
-        x = self.gap_branch(x)
-        local_feature.append(x)
-        x = self.dilation_convs1(x)
-        x = self.gap_branch(x)
-        local_feature.append(x)
-        x = self.dilation_convs2(x)
-        x = self.gap_branch(x)
-        local_feature.append(x)
+        x0 = self.dilation_convs0(inputs) 
+        #x = self.gap_branch(x)
+        x1 = self.dilation_convs1(inputs)
+        x2 = self.dilation_convs2(inputs)
+        x = tf.concat([x0,x1,x2],axis=-1)
+        #x = self.conv1(x)
+        #x = self.relu(x)
             
-        return tf.concat(local_feature, axis=-1)
+        return x
 
     def get_config(self):
         config = {
