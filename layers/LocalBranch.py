@@ -30,6 +30,10 @@ class MultiAtrous(keras.Model):
                                     padding       = self.padding, 
                                     dilation_rate = 18
                                 )
+        self.conv1 = layers.Conv2D(
+            filters=512,
+            kernel_size=1,
+            padding='same')
         # Global Average Pooling Branch 
         self.gap_branch = keras.Sequential(
             [
@@ -49,8 +53,8 @@ class MultiAtrous(keras.Model):
         x1 = self.dilation_convs1(inputs)
         x2 = self.dilation_convs2(inputs)
         x = tf.concat([x0,x1,x2],axis=-1)
-        #x = self.conv1(x)
-        #x = self.relu(x)
+        x = self.conv1(x)
+        x = tf.nn.relu(x)
             
         return x
 
@@ -74,7 +78,7 @@ class DOLGLocalBranch(keras.Model):
         self.conv2 = layers.Conv2D(1024, kernel_size=1, use_bias=False)
         self.conv3 = layers.Conv2D(1024, kernel_size=1)
         self.bn = layers.BatchNormalization()
-
+        self.glpool = layers.GlobalAveragePooling2D(keepdims=True)
     def call(self, inputs, training=None, **kwargs):
         # Local Branach + Normalization / Conv-Bn Module 
         local_feat = self.multi_atrous(inputs)
@@ -84,9 +88,9 @@ class DOLGLocalBranch(keras.Model):
         # Self-Attention
         local_feat = self.conv2(local_feat)
         local_feat = self.bn(local_feat)
-
+        local_feat = self.glpool(local_feat)
         # l-2 norms
-        norm_local_feat = tf.math.l2_normalize(local_feat)
+        norm_local_feat = tf.math.l2_normalize(local_feat, axis=-1)
 
         # softplus activations
         attn_map = tf.nn.relu(local_feat)
