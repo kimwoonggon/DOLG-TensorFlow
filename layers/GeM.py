@@ -19,7 +19,7 @@ class GeneralizedMeanPooling2D(layers.Layer):
         self.p = self.add_weight(name="norms", 
                                  shape=(input_shape[-1],),
                                  initializer=keras.initializers.constant(self.init_norm),
-                                 trainable=True)
+                                 trainable=False)
         super(GeneralizedMeanPooling2D, self).build(input_shape)
 
     def call(self, inputs):
