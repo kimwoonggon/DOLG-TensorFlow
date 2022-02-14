@@ -14,21 +14,21 @@ class MultiAtrous(keras.Model):
 
         self.dilation_convs0 = layers.Conv2D(
                                     filters       = 512, 
-                                    kernel_size   = self.kernel_size,  
+                                    kernel_size   = 3,  
                                     padding       = self.padding, 
-                                    dilation_rate = 6
+                                    #dilation_rate = 6
                                 )
         self.dilation_convs1 = layers.Conv2D(
                                     filters       = 512, 
-                                    kernel_size   = self.kernel_size,  
+                                    kernel_size   = 6,  
                                     padding       = self.padding, 
-                                    dilation_rate = 12
+                                    #dilation_rate = 12
                                 )
         self.dilation_convs2 = layers.Conv2D(
                                     filters       = 512, 
-                                    kernel_size   = self.kernel_size,  
+                                    kernel_size   = 9,  
                                     padding       = self.padding, 
-                                    dilation_rate = 18
+                                    #dilation_rate = 18
                                 )
         self.conv1 = layers.Conv2D(
             filters=512,
